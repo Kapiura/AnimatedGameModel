@@ -22,10 +22,11 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+		void changeBool(bool& statement);
 
 		Flag* flag;
 		Particle* draggedParticle = nullptr;
 		bool isDragging = false;
 		bool changeWindDirectory = false;
-		bool windEnabled = true;
+		bool windEnabled = false;
 };

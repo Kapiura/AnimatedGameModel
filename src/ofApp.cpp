@@ -5,7 +5,7 @@ void ofApp::setup()
 {
     ofBackground(65, 103, 166);
 
-    glm::vec3 center = glm::vec3(ofGetWidth() / 2, 50.0f, 0);
+    glm::vec3 center = glm::vec3(ofGetWidth(), 50.0f, -150.0f);
 
     flag = new Flag(center);
 }
@@ -21,7 +21,7 @@ void ofApp::update()
     float deltaTime = ofGetLastFrameTime();
     if(windEnabled)
     {
-        float wind = ofRandom(-ofNoise(ofGetElapsedTimef()), ofNoise(ofGetElapsedTimef()))/2;
+        float wind = ofRandom(-ofNoise(ofGetElapsedTimef()), ofNoise(ofGetElapsedTimef()))/4;
         for (auto& particle : flag->getParticles())
         {
             if (!particle.isMovable())
@@ -47,20 +47,9 @@ void ofApp::draw()
 void ofApp::keyPressed(int key)
 {
     if(key == 'c')
-    {
-        if(changeWindDirectory)
-            changeWindDirectory = false;
-        else
-            changeWindDirectory = true;
-    }
+        changeBool(changeWindDirectory);
     if(key == 'w')
-    {
-        if(windEnabled)
-            windEnabled = false;
-        else
-            windEnabled = true;
-    }
-
+        changeBool(windEnabled);
 }
 
 //--------------------------------------------------------------
@@ -126,4 +115,12 @@ void ofApp::gotMessage(ofMessage msg){
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
 
+}
+
+void ofApp::changeBool(bool& statement)
+{
+    if(statement)
+        statement = false;
+    else
+        statement = true;
 }

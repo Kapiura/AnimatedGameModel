@@ -13,7 +13,6 @@ Bond::Bond(Particle* a, Particle* b):
     maxLength = restLength * elasticity;
 }
 
-
 void Bond::update()
 {
     glm::vec3 delta = particle2->getPosition() - particle1->getPosition();
@@ -35,7 +34,6 @@ void Bond::update()
         }
     }
 }
-
 
 void Bond::draw()
 {

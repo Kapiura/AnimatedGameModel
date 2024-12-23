@@ -12,13 +12,9 @@ movable(false)
 void Particle::update(float dt, bool isBeingDragged)
 {
     if (movable && isBeingDragged)
-    {
         position = glm::vec3(ofGetMouseX(), ofGetMouseY(), position.z);
-    }
     else if (movable)
-    {
         return;
-    }
     else
     {
         glm::vec3 tempPos = position;
