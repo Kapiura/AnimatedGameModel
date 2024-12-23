@@ -1,0 +1,541 @@
+#include "Bond.hpp"
+#include "Particle.hpp"
+#include <glm/glm.hpp>
+
+Bond::Bond(Particle* a, Particle* b):
+    particle1(a),
+    particle2(b),
+    elasticity(1.2f)
+{
+    restLength = glm::distance(
+        a->getPosition(),
+        b->getPosition());
+    maxLength = restLength * elasticity;
+}
+
+
+void Bond::update()
+{
+    glm::vec3 delta = particle2->getPosition() - particle1->getPosition();
+    float currentLength = glm::length(delta);
+
+    if (currentLength > maxLength)
+        currentLength = maxLength;
+
+    if (currentLength > 0.0f) {
+        float difference = (currentLength - restLength) / currentLength;
+
+        glm::vec3 correction = delta * 0.5f * difference;
+
+        if (!particle1->isMovable()) {
+            particle1->setPosition(particle1->getPosition() + correction);
+        }
+        if (!particle2->isMovable()) {
+            particle2->setPosition(particle2->getPosition() - correction);
+        }
+    }
+}
+
+
+void Bond::draw()
+{
+    ofDrawLine(particle1->getPosition(), particle2->getPosition());
+}#include "Flag.hpp"
+
+Flag::Flag(glm::vec3 position):
+rows(20),
+columns(20),
+spacing(20.0f)
+{
+    // mesh.setMode(OF_PRIMITIVE_TRIANGLES);
+    for(int y = 0; y < rows; y++)
+        for(int x = 0; x < columns; x++)
+        {
+            glm::vec3 particlePos = glm::vec3(
+                position.x + (x * spacing),
+                position.y + (y * spacing),
+                0
+            );
+            mesh.addVertex(particlePos);
+            glm::vec2 uv(
+                static_cast<float>(x) / (columns - 1) / 100,
+                static_cast<float>(y) / (rows - 1) / 100
+            );
+            // mesh.addTexCoord(uv);
+            Particle p(particlePos);
+            if (x == 0)
+                p.setMovable(true);
+            particles.push_back(p);
+        }
+
+    for(int y = 0; y < rows; y++)
+        for(int x = 0; x < columns; x++)
+        {
+            int id = y * columns + x;
+
+            if(x < columns - 1)
+            {
+                bonds.emplace_back(&particles[id], &particles[id + 1]);
+            }
+            if(y < rows - 1)
+            {
+                bonds.emplace_back(&particles[id], &particles[id + columns]);
+            }
+            // int bottomLeft = id;
+            // int bottomRight = id + 1;
+            // int topLeft = id + columns;
+            // int topRight = id + columns + 1;
+
+            // mesh.addIndex(bottomLeft);
+            // mesh.addIndex(bottomRight);
+            // mesh.addIndex(topRight);
+
+            // mesh.addIndex(bottomLeft);
+            // mesh.addIndex(topRight);
+            // mesh.addIndex(topLeft);
+        }
+    // texture.load("flag.png");
+}
+
+void Flag::update(float dt)
+{
+    for(auto& el: particles)
+        el.update(dt);
+    for (int i = 0; i < 5; i++)
+        for(auto& el: bonds)
+            el.update();
+//    for (size_t i = 0; i < particles.size(); i++)
+//         mesh.setVertex(i, particles[i].getPosition());
+}
+
+void Flag::draw()
+{
+    // texture.bind();
+    // mesh.draw();
+    // texture.unbind();
+    for(auto& el: particles)
+        el.draw();
+    for(auto& el: bonds)
+        el.draw();
+}#include "ofMain.h"
+#include "ofApp.h"
+
+//========================================================================
+int main( ){
+
+	//Use ofGLFWWindowSettings for more options like multi-monitor fullscreen
+	ofGLWindowSettings settings;
+	settings.setSize(1024, 768);
+	settings.windowMode = OF_WINDOW; //can also be OF_FULLSCREEN
+
+	auto window = ofCreateWindow(settings);
+
+	ofRunApp(window, make_shared<ofApp>());
+	ofRunMainLoop();
+
+}
+#include "ofApp.h"
+
+//--------------------------------------------------------------
+void ofApp::setup()
+{
+    ofBackground(65, 103, 166);
+
+    glm::vec3 center = glm::vec3(ofGetWidth() / 2, 50.0f, 0);
+
+    flag = new Flag(center);
+}
+
+void ofApp::exit()
+{
+	delete flag;
+}
+
+//--------------------------------------------------------------
+void ofApp::update()
+{
+    float deltaTime = ofGetLastFrameTime();
+    // float wind = ofNoise(ofGetElapsedTimef()) * 20.0f;
+    // for (auto& particle : flag->getParticles())
+    // {
+    //     if (particle.isMovable())
+    //     {
+    //         particle.applyForce(glm::vec3(wind, 0.0f, 0.0f));
+    //     }
+    // }
+
+
+    flag->update(deltaTime);
+}
+
+
+//--------------------------------------------------------------
+void ofApp::draw()
+{
+    flag->draw();
+}
+
+//--------------------------------------------------------------
+void ofApp::keyPressed(int key){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::keyReleased(int key){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseMoved(int x, int y ){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseDragged(int x, int y, int button){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mousePressed(int x, int y, int button){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseReleased(int x, int y, int button){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseEntered(int x, int y){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseExited(int x, int y){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::windowResized(int w, int h){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::gotMessage(ofMessage msg){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::dragEvent(ofDragInfo dragInfo){
+
+}
+#include "Particle.hpp"
+#include "ofMain.h"
+
+Particle::Particle(glm::vec3 position):
+position(position),
+prevPosition(position),
+radius(3.0f),
+movable(false)
+{
+};
+
+void Particle::update(float dt)
+{
+    if (movable)
+      return;
+
+    glm::vec3 tempPos = position;
+    position += position - prevPosition;
+    position += glm::vec3(0.0f, 9.81f, 0.0f) * dt * dt;
+    prevPosition = tempPos;
+}
+
+void Particle::draw()
+{
+  ofSetColor(0,255,0);
+  ofDrawSphere(position, radius);
+}#include "Bond.hpp"
+#include "Particle.hpp"
+#include <glm/glm.hpp>
+
+Bond::Bond(Particle* a, Particle* b):
+    particle1(a),
+    particle2(b),
+    elasticity(1.2f)
+{
+    restLength = glm::distance(
+        a->getPosition(),
+        b->getPosition());
+    maxLength = restLength * elasticity;
+}
+
+
+void Bond::update()
+{
+    glm::vec3 delta = particle2->getPosition() - particle1->getPosition();
+    float currentLength = glm::length(delta);
+
+    if (currentLength > maxLength)
+        currentLength = maxLength;
+
+    if (currentLength > 0.0f) {
+        float difference = (currentLength - restLength) / currentLength;
+
+        glm::vec3 correction = delta * 0.5f * difference;
+
+        if (!particle1->isMovable()) {
+            particle1->setPosition(particle1->getPosition() + correction);
+        }
+        if (!particle2->isMovable()) {
+            particle2->setPosition(particle2->getPosition() - correction);
+        }
+    }
+}
+
+
+void Bond::draw()
+{
+    ofDrawLine(particle1->getPosition(), particle2->getPosition());
+}#include "Flag.hpp"
+
+Flag::Flag(glm::vec3 position):
+rows(20),
+columns(20),
+spacing(20.0f)
+{
+    // mesh.setMode(OF_PRIMITIVE_TRIANGLES);
+    for(int y = 0; y < rows; y++)
+        for(int x = 0; x < columns; x++)
+        {
+            glm::vec3 particlePos = glm::vec3(
+                position.x + (x * spacing),
+                position.y + (y * spacing),
+                0
+            );
+            mesh.addVertex(particlePos);
+            glm::vec2 uv(
+                static_cast<float>(x) / (columns - 1) / 100,
+                static_cast<float>(y) / (rows - 1) / 100
+            );
+            // mesh.addTexCoord(uv);
+            Particle p(particlePos);
+            if (x == 0)
+                p.setMovable(true);
+            particles.push_back(p);
+        }
+
+    for(int y = 0; y < rows; y++)
+        for(int x = 0; x < columns; x++)
+        {
+            int id = y * columns + x;
+
+            if(x < columns - 1)
+            {
+                bonds.emplace_back(&particles[id], &particles[id + 1]);
+            }
+            if(y < rows - 1)
+            {
+                bonds.emplace_back(&particles[id], &particles[id + columns]);
+            }
+            // int bottomLeft = id;
+            // int bottomRight = id + 1;
+            // int topLeft = id + columns;
+            // int topRight = id + columns + 1;
+
+            // mesh.addIndex(bottomLeft);
+            // mesh.addIndex(bottomRight);
+            // mesh.addIndex(topRight);
+
+            // mesh.addIndex(bottomLeft);
+            // mesh.addIndex(topRight);
+            // mesh.addIndex(topLeft);
+        }
+    // texture.load("flag.png");
+}
+
+void Flag::update(float dt, bool isBeingDragged)
+{
+    for(auto& el: particles)
+        el.update(dt,isBeingDragged);
+    for (int i = 0; i < 5; i++)
+        for(auto& el: bonds)
+            el.update();
+//    for (size_t i = 0; i < particles.size(); i++)
+//         mesh.setVertex(i, particles[i].getPosition());
+}
+
+void Flag::draw()
+{
+    // texture.bind();
+    // mesh.draw();
+    // texture.unbind();
+    for(auto& el: particles)
+        el.draw();
+    for(auto& el: bonds)
+        el.draw();
+}
+
+bool Flag::isMouseNearParticle(Particle& particle, float threshold)
+{
+    glm::vec3 mousePos = glm::vec3(ofGetMouseX(), ofGetMouseY(), 0.0f);
+    float distance = glm::distance(mousePos, particle.getPosition());
+    return distance < threshold;
+}
+#include "ofMain.h"
+#include "ofApp.h"
+
+//========================================================================
+int main( ){
+
+	//Use ofGLFWWindowSettings for more options like multi-monitor fullscreen
+	ofGLWindowSettings settings;
+	settings.setSize(1024, 768);
+	settings.windowMode = OF_WINDOW; //can also be OF_FULLSCREEN
+
+	auto window = ofCreateWindow(settings);
+
+	ofRunApp(window, make_shared<ofApp>());
+	ofRunMainLoop();
+
+}
+#include "ofApp.h"
+
+//--------------------------------------------------------------
+void ofApp::setup()
+{
+    ofBackground(65, 103, 166);
+
+    glm::vec3 center = glm::vec3(ofGetWidth() / 2, 50.0f, 0);
+
+    flag = new Flag(center);
+}
+
+void ofApp::exit()
+{
+	delete flag;
+}
+
+//--------------------------------------------------------------
+void ofApp::update()
+{
+    float deltaTime = ofGetLastFrameTime();
+    // float wind = ofNoise(ofGetElapsedTimef()) * 20.0f;
+    // for (auto& particle : flag->getParticles())
+    // {
+    //     if (particle.isMovable())
+    //     {
+    //         particle.applyForce(glm::vec3(wind, 0.0f, 0.0f));
+    //     }
+    // }
+
+
+    flag->update(deltaTime, isDragging);
+}
+
+
+//--------------------------------------------------------------
+void ofApp::draw()
+{
+    flag->draw();
+}
+
+//--------------------------------------------------------------
+void ofApp::keyPressed(int key){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::keyReleased(int key){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseMoved(int x, int y ){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseDragged(int x, int y, int button){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mousePressed(int x, int y, int button)
+{
+    for (auto& particle : flag->getParticles()) {
+        if (flag->isMouseNearParticle(particle, 20.0f)) {
+            draggedParticle = &particle;
+            isDragging = true;
+            draggedParticle->setMovable(true);
+        }
+    }
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseReleased(int x, int y, int button)
+{
+    if (isDragging) {
+        isDragging = false;
+        draggedParticle->setMovable(false);
+        draggedParticle = nullptr;
+    }
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseEntered(int x, int y){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::mouseExited(int x, int y){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::windowResized(int w, int h){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::gotMessage(ofMessage msg){
+
+}
+
+//--------------------------------------------------------------
+void ofApp::dragEvent(ofDragInfo dragInfo){
+
+}
+#include "Particle.hpp"
+#include "ofMain.h"
+
+Particle::Particle(glm::vec3 position):
+position(position),
+prevPosition(position),
+radius(3.0f),
+movable(false)
+{
+};
+
+void Particle::update(float dt, bool isBeingDragged)
+{
+    if (movable && isBeingDragged) {
+        // Jeśli punkt jest przeciągany przez myszkę, zmieniamy jego pozycję
+        position = glm::vec3(ofGetMouseX(), ofGetMouseY(), position.z);
+    }
+    else if (movable) {
+        return;
+    } else {
+        glm::vec3 tempPos = position;
+        position += position - prevPosition;
+        position += glm::vec3(0.0f, 9.81f, 0.0f) * dt * dt;
+        prevPosition = tempPos;
+    }
+}
+
+
+void Particle::draw()
+{
+  ofSetColor(0,255,0);
+  ofDrawSphere(position, radius);
+}
