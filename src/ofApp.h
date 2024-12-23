@@ -26,4 +26,6 @@ class ofApp : public ofBaseApp{
 		Flag* flag;
 		Particle* draggedParticle = nullptr;
 		bool isDragging = false;
+		bool changeWindDirectory = false;
+		bool windEnabled = true;
 };

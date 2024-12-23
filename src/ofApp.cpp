@@ -19,12 +19,18 @@ void ofApp::exit()
 void ofApp::update()
 {
     float deltaTime = ofGetLastFrameTime();
-    float wind = ofRandom(-ofNoise(ofGetElapsedTimef()), ofNoise(ofGetElapsedTimef()))/2;
-    for (auto& particle : flag->getParticles())
+    if(windEnabled)
     {
-        if (!particle.isMovable())
+        float wind = ofRandom(-ofNoise(ofGetElapsedTimef()), ofNoise(ofGetElapsedTimef()))/2;
+        for (auto& particle : flag->getParticles())
         {
-            particle.applyForce(glm::vec3(wind, wind, wind));
+            if (!particle.isMovable())
+            {
+                if(!changeWindDirectory)
+                    particle.applyForce(glm::vec3(std::abs(wind), wind/2, wind));
+                else
+                    particle.applyForce(glm::vec3(-std::abs(wind), wind/2, wind));
+            }
         }
     }
     flag->update(deltaTime, isDragging);
@@ -38,7 +44,22 @@ void ofApp::draw()
 }
 
 //--------------------------------------------------------------
-void ofApp::keyPressed(int key){
+void ofApp::keyPressed(int key)
+{
+    if(key == 'c')
+    {
+        if(changeWindDirectory)
+            changeWindDirectory = false;
+        else
+            changeWindDirectory = true;
+    }
+    if(key == 'w')
+    {
+        if(windEnabled)
+            windEnabled = false;
+        else
+            windEnabled = true;
+    }
 
 }
 

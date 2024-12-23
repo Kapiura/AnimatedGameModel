@@ -46,10 +46,8 @@ void Flag::update(float dt, bool isBeingDragged)
 
 void Flag::draw()
 {
-    for(auto& el: particles)
-    {
-        el.draw();
-    }
+    // for(auto& el: particles)
+    //     el.draw();
     for(auto& el: bonds)
         el.draw();
 }
