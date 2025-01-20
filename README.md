@@ -1,2 +1,2 @@
 # AnimatedGameModel
-AnimatedGameModel - modelowanie i wgl
+AnimatedGameModel wykonane w celach edukacyjnych - C++, Openframeworks
